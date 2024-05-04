@@ -44,7 +44,7 @@ void FuturesForm::on_mairuButton_clicked()
     }
     else if(ui->pingcangRadio->isChecked())
     {
-        type="duoping";
+        type="kongping";
         WeiTuo wt;
         wt.setCustomerID(QString::fromStdString(customerID).toInt());
         wt.setCount(ui->countSpinBox->text().toInt());
@@ -81,10 +81,32 @@ void FuturesForm::socketRead()
     }
 }
 
+std::string FuturesForm::time_t_to_string(const std::string& timeString) {
+    if(timeString=="")
+        return "";
+    // 将输入的字符串直接转换为 time_t 类型
+    time_t timestamp = std::stoll(timeString);
+
+    // 转换为本地时间结构
+    tm* localTime = localtime(&timestamp);
+
+    // 提取小时和分钟
+    int hour = localTime->tm_hour;
+    int minute = localTime->tm_min;
+
+    // 手动构建字符串
+    std::string hourStr = hour < 10 ? "0" + std::to_string(hour) : std::to_string(hour);
+    std::string minuteStr = minute < 10 ? "0" + std::to_string(minute) : std::to_string(minute);
+
+    return hourStr + ":" + minuteStr;
+}
+
 void FuturesForm::updatePanKou(std::map<std::string,std::string>& d)
 {
     int buyPrice = (int)std::stoi(d["buyPrice"]);
     int sellPrice = (int)std::stoi(d["sellPrice"]);
+    int zuigao = (int)std::stoi(d["maxPrice"]);
+    int zuidi = (int)std::stoi(d["minPrice"]);
     int newPrice = (int)std::stoi(d["newPrice"]);
     int zhangTingPrice = (int)std::stoi(d["zhangTingPrice"]);
     int dieTingPrice = (int)std::stoi(d["dieTingPrice"]);
@@ -96,6 +118,15 @@ void FuturesForm::updatePanKou(std::map<std::string,std::string>& d)
          ui->sellPrice->setText("---");
     else
          ui->sellPrice->setText(QString::fromStdString(std::to_string(sellPrice)));
+    if(zuigao==-1)
+         ui->zuigao->setText("---");
+    else
+         ui->zuigao->setText(QString::fromStdString(std::to_string(zuigao)));
+    if(zuidi==0x3f3f3f3f)
+         ui->zuidi->setText("---");
+    else
+         ui->zuidi->setText(QString::fromStdString(std::to_string(zuidi)));
+
     ui->buyCount->setText(QString::fromStdString(d["buyCount"]));
     ui->sellCount->setText(QString::fromStdString(d["sellCount"]));
     ui->zuixin->setText(QString::fromStdString(std::to_string(newPrice)));
@@ -105,6 +136,70 @@ void FuturesForm::updatePanKou(std::map<std::string,std::string>& d)
     ui->waipan->setText(QString::fromStdString(d["waiPan"]));
     ui->fudu->setText(QString::fromStdString(d["zhangDieFu"].substr(0,4)+"%"));
 
+
+    for(auto it = d.begin();it!=d.end();it++)
+    {
+         if(it->second=="duokai")
+            it->second="多开";
+         else if(it->second=="duoping")
+            it->second="多平";
+         else if(it->second=="kongkai")
+            it->second="空开";
+         else if(it->second=="kongping")
+            it->second="空平";
+         else if(it->second=="shuangkai")
+            it->second="双开";
+         else if(it->second=="shuangping")
+            it->second="双平";
+         else if(it->second=="duohuan")
+            it->second="多换";
+         else if(it->second=="konghuan")
+            it->second="空换";
+    }
+
+    ui->time_1->setText(QString::fromStdString(time_t_to_string(d["time1"])));
+    ui->time_2->setText(QString::fromStdString(time_t_to_string(d["time2"])));
+    ui->time_3->setText(QString::fromStdString(time_t_to_string(d["time3"])));
+    ui->time_4->setText(QString::fromStdString(time_t_to_string(d["time4"])));
+    ui->time_5->setText(QString::fromStdString(time_t_to_string(d["time5"])));
+    ui->time_6->setText(QString::fromStdString(time_t_to_string(d["time6"])));
+    ui->time_7->setText(QString::fromStdString(time_t_to_string(d["time7"])));
+    ui->time_8->setText(QString::fromStdString(time_t_to_string(d["time8"])));
+    ui->time_9->setText(QString::fromStdString(time_t_to_string(d["time9"])));
+    ui->time_10->setText(QString::fromStdString(time_t_to_string(d["time10"])));
+
+    ui->price_1->setText(QString::fromStdString(d["price1"]));
+    ui->price_2->setText(QString::fromStdString(d["price2"]));
+    ui->price_3->setText(QString::fromStdString(d["price3"]));
+    ui->price_4->setText(QString::fromStdString(d["price4"]));
+    ui->price_5->setText(QString::fromStdString(d["price5"]));
+    ui->price_6->setText(QString::fromStdString(d["price6"]));
+    ui->price_7->setText(QString::fromStdString(d["price7"]));
+    ui->price_8->setText(QString::fromStdString(d["price8"]));
+    ui->price_9->setText(QString::fromStdString(d["price9"]));
+    ui->price_10->setText(QString::fromStdString(d["price10"]));
+
+    ui->count_1->setText(QString::fromStdString(d["count1"]));
+    ui->count_2->setText(QString::fromStdString(d["count2"]));
+    ui->count_3->setText(QString::fromStdString(d["count3"]));
+    ui->count_4->setText(QString::fromStdString(d["count4"]));
+    ui->count_5->setText(QString::fromStdString(d["count5"]));
+    ui->count_6->setText(QString::fromStdString(d["count6"]));
+    ui->count_7->setText(QString::fromStdString(d["count7"]));
+    ui->count_8->setText(QString::fromStdString(d["count8"]));
+    ui->count_9->setText(QString::fromStdString(d["count9"]));
+    ui->count_10->setText(QString::fromStdString(d["count10"]));
+
+    ui->type_1->setText(QString::fromStdString(d["optype1"]));
+    ui->type_2->setText(QString::fromStdString(d["optype2"]));
+    ui->type_3->setText(QString::fromStdString(d["optype3"]));
+    ui->type_4->setText(QString::fromStdString(d["optype4"]));
+    ui->type_5->setText(QString::fromStdString(d["optype5"]));
+    ui->type_6->setText(QString::fromStdString(d["optype6"]));
+    ui->type_7->setText(QString::fromStdString(d["optype7"]));
+    ui->type_8->setText(QString::fromStdString(d["optype8"]));
+    ui->type_9->setText(QString::fromStdString(d["optype9"]));
+    ui->type_10->setText(QString::fromStdString(d["optype10"]));
 }
 
 void FuturesForm::socketDisconnected()
@@ -129,7 +224,7 @@ void FuturesForm::on_maichuButton_clicked()
     }
     else if(ui->pingcangRadio->isChecked())
     {
-        type="kongping";
+        type="duoping";
         WeiTuo wt;
         wt.setCustomerID(QString::fromStdString(customerID).toInt());
         wt.setCount(ui->countSpinBox->text().toInt());

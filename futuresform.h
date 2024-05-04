@@ -21,6 +21,7 @@ class FuturesForm : public QWidget
 public:
     explicit FuturesForm(QTcpSocket *s, std::string customerID, QWidget *parent = nullptr);
     void getPanKou();
+    std::string time_t_to_string(const std::string& timeString);
     void updatePanKou(std::map<std::string,std::string>& d);
     ~FuturesForm();
 
