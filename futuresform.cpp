@@ -201,6 +201,8 @@ void FuturesForm::updatePanKou(std::map<std::string,std::string>& d)
 
     std::vector<std::string> optypeKeys = {"optype1", "optype2", "optype3", "optype4", "optype5",
                                           "optype6", "optype7", "optype8", "optype9", "optype10"};
+    std::vector<std::string> color = {"color1", "color2", "color3", "color4", "color5",
+                                           "color6", "color7", "color8", "color9", "color10"};
     int maxcnt = 10;
     for (int i = 0; i < maxcnt; ++i)
     {
@@ -216,11 +218,20 @@ void FuturesForm::updatePanKou(std::map<std::string,std::string>& d)
     for (int i = 0; i < maxcnt; ++i)
     {
          ChengJiaolabels[i][2]->setText(QString::fromStdString(d[countKeys[i]]));
+         if(d[color[i]]=="1")
+            ChengJiaolabels[i][2]->setStyleSheet("color: red;");
+         else
+            ChengJiaolabels[i][2]->setStyleSheet("color: #00ca00;");
+
     }
 
     for (int i = 0; i < maxcnt; ++i)
     {
          ChengJiaolabels[i][3]->setText(QString::fromStdString(d[optypeKeys[i]]));
+         if(d[color[i]]=="1")
+            ChengJiaolabels[i][3]->setStyleSheet("color: red;");
+         else
+            ChengJiaolabels[i][3]->setStyleSheet("color: #00ca00;");
     }
 
 }
