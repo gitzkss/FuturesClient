@@ -13,6 +13,29 @@ FuturesForm::FuturesForm(QTcpSocket *s, std::string id, QWidget *parent) :
     connect(socket, &QTcpSocket::readyRead, this, &FuturesForm::socketRead);
     getPanKou();
 
+    ChengJiaolabels = {
+        {ui->time_1, ui->price_1, ui->count_1, ui->type_1},
+        {ui->time_2, ui->price_2, ui->count_2, ui->type_2},
+        {ui->time_3, ui->price_3, ui->count_3, ui->type_3},
+        {ui->time_4, ui->price_4, ui->count_4, ui->type_4},
+        {ui->time_5, ui->price_5, ui->count_5, ui->type_5},
+        {ui->time_6, ui->price_6, ui->count_6, ui->type_6},
+        {ui->time_7, ui->price_7, ui->count_7, ui->type_7},
+        {ui->time_8, ui->price_8, ui->count_8, ui->type_8},
+        {ui->time_9, ui->price_9, ui->count_9, ui->type_9},
+        {ui->time_10, ui->price_10, ui->count_10, ui->type_10}
+    };
+
+    //进度条
+    ui->progressBar->setMinimum(0);
+    ui->progressBar->setMaximum(1000);
+
+    // 设置未完成部分的颜色（卖一价数量）为绿色
+    ui->progressBar->setStyleSheet("QProgressBar {border-radius:1px; background:#00ca00;}"
+                                   "QProgressBar::chunk { background: red; }");
+
+
+
 }
 
 FuturesForm::~FuturesForm()
@@ -93,12 +116,12 @@ std::string FuturesForm::time_t_to_string(const std::string& timeString) {
     // 提取小时和分钟
     int hour = localTime->tm_hour;
     int minute = localTime->tm_min;
-
+    int second = localTime->tm_sec;
     // 手动构建字符串
     std::string hourStr = hour < 10 ? "0" + std::to_string(hour) : std::to_string(hour);
     std::string minuteStr = minute < 10 ? "0" + std::to_string(minute) : std::to_string(minute);
-
-    return hourStr + ":" + minuteStr;
+    std::string secondStr = (second < 10) ? "0" + std::to_string(second) : std::to_string(second);
+    return hourStr + ":" + minuteStr + ":" + secondStr;
 }
 
 void FuturesForm::updatePanKou(std::map<std::string,std::string>& d)
@@ -136,6 +159,20 @@ void FuturesForm::updatePanKou(std::map<std::string,std::string>& d)
     ui->waipan->setText(QString::fromStdString(d["waiPan"]));
     ui->fudu->setText(QString::fromStdString(d["zhangDieFu"].substr(0,4)+"%"));
 
+    // 买一价数量和卖一价数量
+    int buyCount = QString::fromStdString(d["buyCount"]).toInt();
+    int sellCount = QString::fromStdString(d["sellCount"]).toInt();
+
+    // 计算比例
+    double total = buyCount + sellCount;
+    double buyPercentage = buyCount / total;
+
+
+    // 设置进度条的比例
+    ui->progressBar->setValue(buyPercentage * 1000); // 买一价数量在左侧
+    ui->progressBar->setAlignment(Qt::AlignLeft);
+    ui->progressBar->setAlignment(Qt::AlignRight);
+
 
     for(auto it = d.begin();it!=d.end();it++)
     {
@@ -156,50 +193,36 @@ void FuturesForm::updatePanKou(std::map<std::string,std::string>& d)
          else if(it->second=="konghuan")
             it->second="空换";
     }
+    std::vector<std::string> priceKeys = {"price1", "price2", "price3", "price4", "price5",
+                                         "price6", "price7", "price8", "price9", "price10"};
 
-    ui->time_1->setText(QString::fromStdString(time_t_to_string(d["time1"])));
-    ui->time_2->setText(QString::fromStdString(time_t_to_string(d["time2"])));
-    ui->time_3->setText(QString::fromStdString(time_t_to_string(d["time3"])));
-    ui->time_4->setText(QString::fromStdString(time_t_to_string(d["time4"])));
-    ui->time_5->setText(QString::fromStdString(time_t_to_string(d["time5"])));
-    ui->time_6->setText(QString::fromStdString(time_t_to_string(d["time6"])));
-    ui->time_7->setText(QString::fromStdString(time_t_to_string(d["time7"])));
-    ui->time_8->setText(QString::fromStdString(time_t_to_string(d["time8"])));
-    ui->time_9->setText(QString::fromStdString(time_t_to_string(d["time9"])));
-    ui->time_10->setText(QString::fromStdString(time_t_to_string(d["time10"])));
+    std::vector<std::string> countKeys = {"count1", "count2", "count3", "count4", "count5",
+                                         "count6", "count7", "count8", "count9", "count10"};
 
-    ui->price_1->setText(QString::fromStdString(d["price1"]));
-    ui->price_2->setText(QString::fromStdString(d["price2"]));
-    ui->price_3->setText(QString::fromStdString(d["price3"]));
-    ui->price_4->setText(QString::fromStdString(d["price4"]));
-    ui->price_5->setText(QString::fromStdString(d["price5"]));
-    ui->price_6->setText(QString::fromStdString(d["price6"]));
-    ui->price_7->setText(QString::fromStdString(d["price7"]));
-    ui->price_8->setText(QString::fromStdString(d["price8"]));
-    ui->price_9->setText(QString::fromStdString(d["price9"]));
-    ui->price_10->setText(QString::fromStdString(d["price10"]));
+    std::vector<std::string> optypeKeys = {"optype1", "optype2", "optype3", "optype4", "optype5",
+                                          "optype6", "optype7", "optype8", "optype9", "optype10"};
+    int maxcnt = 10;
+    for (int i = 0; i < maxcnt; ++i)
+    {
+         QString timeStr = QString::fromStdString(time_t_to_string(d["time" + std::to_string(i + 1)]));
+         ChengJiaolabels[i][0]->setText(timeStr);
+    }
 
-    ui->count_1->setText(QString::fromStdString(d["count1"]));
-    ui->count_2->setText(QString::fromStdString(d["count2"]));
-    ui->count_3->setText(QString::fromStdString(d["count3"]));
-    ui->count_4->setText(QString::fromStdString(d["count4"]));
-    ui->count_5->setText(QString::fromStdString(d["count5"]));
-    ui->count_6->setText(QString::fromStdString(d["count6"]));
-    ui->count_7->setText(QString::fromStdString(d["count7"]));
-    ui->count_8->setText(QString::fromStdString(d["count8"]));
-    ui->count_9->setText(QString::fromStdString(d["count9"]));
-    ui->count_10->setText(QString::fromStdString(d["count10"]));
+    for (int i = 0; i < maxcnt; ++i)
+    {
+         ChengJiaolabels[i][1]->setText(QString::fromStdString(d[priceKeys[i]]));
+    }
 
-    ui->type_1->setText(QString::fromStdString(d["optype1"]));
-    ui->type_2->setText(QString::fromStdString(d["optype2"]));
-    ui->type_3->setText(QString::fromStdString(d["optype3"]));
-    ui->type_4->setText(QString::fromStdString(d["optype4"]));
-    ui->type_5->setText(QString::fromStdString(d["optype5"]));
-    ui->type_6->setText(QString::fromStdString(d["optype6"]));
-    ui->type_7->setText(QString::fromStdString(d["optype7"]));
-    ui->type_8->setText(QString::fromStdString(d["optype8"]));
-    ui->type_9->setText(QString::fromStdString(d["optype9"]));
-    ui->type_10->setText(QString::fromStdString(d["optype10"]));
+    for (int i = 0; i < maxcnt; ++i)
+    {
+         ChengJiaolabels[i][2]->setText(QString::fromStdString(d[countKeys[i]]));
+    }
+
+    for (int i = 0; i < maxcnt; ++i)
+    {
+         ChengJiaolabels[i][3]->setText(QString::fromStdString(d[optypeKeys[i]]));
+    }
+
 }
 
 void FuturesForm::socketDisconnected()

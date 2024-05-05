@@ -37,6 +37,8 @@ private:
     Ui::FuturesForm *ui;
     QTcpSocket *socket;
     std::string customerID;
+    std::vector<std::vector<QLabel*>> ChengJiaolabels;
+
 };
 
 #endif // FUTURESFORM_H

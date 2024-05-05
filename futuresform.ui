@@ -534,9 +534,9 @@
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>50</x>
+     <x>30</x>
      <y>20</y>
-     <width>361</width>
+     <width>381</width>
      <height>441</height>
     </rect>
    </property>
@@ -1075,10 +1075,13 @@
    <property name="geometry">
     <rect>
      <x>430</x>
-     <y>30</y>
-     <width>291</width>
-     <height>23</height>
+     <y>36</y>
+     <width>271</width>
+     <height>20</height>
     </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true"/>
    </property>
    <property name="minimum">
     <number>0</number>
