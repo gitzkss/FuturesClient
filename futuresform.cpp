@@ -12,7 +12,6 @@ FuturesForm::FuturesForm(QTcpSocket *s, std::string id, QWidget *parent) :
     connect(socket, &QTcpSocket::disconnected, this, &FuturesForm::socketDisconnected);
     connect(socket, &QTcpSocket::readyRead, this, &FuturesForm::socketRead);
     getPanKou();
-
     ChengJiaolabels = {
         {ui->time_1, ui->price_1, ui->count_1, ui->type_1},
         {ui->time_2, ui->price_2, ui->count_2, ui->type_2},
@@ -25,6 +24,37 @@ FuturesForm::FuturesForm(QTcpSocket *s, std::string id, QWidget *parent) :
         {ui->time_9, ui->price_9, ui->count_9, ui->type_9},
         {ui->time_10, ui->price_10, ui->count_10, ui->type_10}
     };
+    weituoButton = {
+        ui->weituo_1,
+        ui->weituo_2,
+        ui->weituo_3,
+        ui->weituo_4,
+        ui->weituo_5,
+        ui->weituo_6,
+        ui->weituo_7,
+        ui->weituo_8,
+        ui->weituo_9,
+        ui->weituo_10
+    };
+    priceKeys = {"price1", "price2", "price3", "price4", "price5",
+                                          "price6", "price7", "price8", "price9", "price10"};
+
+    countKeys = {"count1", "count2", "count3", "count4", "count5",
+                                          "count6", "count7", "count8", "count9", "count10"};
+
+    optypeKeys = {"optype1", "optype2", "optype3", "optype4", "optype5",
+                                           "optype6", "optype7", "optype8", "optype9", "optype10"};
+    colorKeys = {"color1", "color2", "color3", "color4", "color5",
+                                      "color6", "color7", "color8", "color9", "color10"};
+    // 创建信号映射器
+    signalMapper = new QSignalMapper(this);
+
+    // 将每个按钮连接到 Lambda 表达式槽函数
+    for (int i = 0; i < 10; ++i)
+    {
+        QPushButton *button = weituoButton[i];
+        connect(button, &QPushButton::clicked, [this, i](){ this->cancel_weituo_clicked(i + 1); });
+    }
 
     //进度条
     ui->progressBar->setMinimum(0);
@@ -33,14 +63,25 @@ FuturesForm::FuturesForm(QTcpSocket *s, std::string id, QWidget *parent) :
     // 设置未完成部分的颜色（卖一价数量）为绿色
     ui->progressBar->setStyleSheet("QProgressBar {border-radius:1px; background:#00ca00;}"
                                    "QProgressBar::chunk { background: red; }");
-
-
+    ui->dieting->setStyleSheet("color: #00ca00;");
+    ui->neipan->setStyleSheet("color: #00ca00;");
+    ui->waipan->setStyleSheet("color: red;");
+    ui->zhangting->setStyleSheet("color: red;");
 
 }
 
 FuturesForm::~FuturesForm()
 {
     delete ui;
+}
+
+void FuturesForm::cancel_weituo_clicked(int i)
+{
+    if(weituolist[i].getOptype()!="")
+    {
+        std::string send = Weituo_to_str(weituolist[i]);
+        socket->write(send.c_str());
+    }
 }
 
 void FuturesForm::getPanKou()
@@ -50,6 +91,7 @@ void FuturesForm::getPanKou()
     //请求盘口
     socket->write(serializeMap(send).c_str());
 }
+
 
 void FuturesForm::on_mairuButton_clicked()
 {
@@ -88,10 +130,49 @@ void FuturesForm::socketConnected()
 
 }
 
+void FuturesForm::updateInfo(std::map<std::string,std::string> d)
+{
+    //bug2("+++",d["keyong"]);
+    std::string quanyi = d["quanyi"].substr(0,d["quanyi"].find('.')+3);
+    std::string keyong = d["keyong"].substr(0,d["keyong"].find('.')+3);
+    ui->quanyi->setText(QString::fromStdString(quanyi));
+    ui->keyong->setText(QString::fromStdString(keyong));
+    ui->duodan->setText(QString::fromStdString(d["duo"]));
+    ui->kongdan->setText(QString::fromStdString(d["kong"]));
+    double fengxianlv = std::stod(d["fengxianlv"]);
+    std::string fxl = std::to_string(fengxianlv).substr(0,5)+"%";
+    ui->fengxianlv->setText(QString::fromStdString(fxl));
+    std::string msg;
+    for(int i = 0; i < 10; i++)
+    {
+        if(d["_count"+std::to_string(i+1)]=="")
+        {
+            weituoButton[i]->setText("空");
+            weituoButton[i]->setStyleSheet("color: black;");
+            weituolist[i+1].setOptype("");
+            continue;
+        }
+        weituolist[i+1].setCustomerID(std::stoi(customerID));
+        weituolist[i+1].setOptype(d["_optype"+std::to_string(i+1)]);
+        weituolist[i+1].setCount(-std::stoi(d["_count"+std::to_string(i+1)]));
+        weituolist[i+1].setPrice(std::stod(d["_price"+std::to_string(i+1)]));
+
+        msg += modifyOptype(d["_optype"+std::to_string(i+1)])+" ";
+        msg += d["_count"+std::to_string(i+1)]+"手 ";
+        msg += d["_price"+std::to_string(i+1)];
+        weituoButton[i]->setText(QString::fromStdString(msg));
+        bug(d["_optype"+std::to_string(i+1)]);
+        if((d["_optype"+std::to_string(i+1)]=="duokai")||(d["_optype"+std::to_string(i+1)]=="kongping"))
+            weituoButton[i]->setStyleSheet("color: red;");
+        else
+            weituoButton[i]->setStyleSheet("color: #00ca00;");
+        msg="";
+    }
+}
+
 void FuturesForm::socketRead()
 {
     std::string data = socket->readAll().toStdString();
-    bug(data);
     std::map<std::string,std::string> d = deserializeMap(data);
     if(d["type"]=="pankou")
     {
@@ -124,8 +205,30 @@ std::string FuturesForm::time_t_to_string(const std::string& timeString) {
     return hourStr + ":" + minuteStr + ":" + secondStr;
 }
 
-void FuturesForm::updatePanKou(std::map<std::string,std::string>& d)
+std::string FuturesForm::modifyOptype(std::string op)
 {
+    if(op=="duokai")
+        op="多开";
+    else if(op=="duoping")
+        op="多平";
+    else if(op=="kongkai")
+        op="空开";
+    else if(op=="kongping")
+        op="空平";
+    else if(op=="shuangkai")
+        op="双开";
+    else if(op=="shuangping")
+        op="双平";
+    else if(op=="duohuan")
+        op="多换";
+    else if(op=="konghuan")
+        op="空换";
+    return op;
+}
+
+void FuturesForm::updatePanKou(std::map<std::string,std::string> d)
+{
+    updateInfo(d);
     int buyPrice = (int)std::stoi(d["buyPrice"]);
     int sellPrice = (int)std::stoi(d["sellPrice"]);
     int zuigao = (int)std::stoi(d["maxPrice"]);
@@ -158,7 +261,13 @@ void FuturesForm::updatePanKou(std::map<std::string,std::string>& d)
     ui->neipan->setText(QString::fromStdString(d["neiPan"]));
     ui->waipan->setText(QString::fromStdString(d["waiPan"]));
     ui->fudu->setText(QString::fromStdString(d["zhangDieFu"].substr(0,4)+"%"));
-
+    ui->shouxufei->setText(QString::fromStdString(d["shouxufei"]));
+    ui->ganggan->setText(QString::fromStdString(d["ganggan"]+" 倍"));
+    //设置涨跌幅颜色
+    if(d["zhangDieFu"][0]=='-')
+         ui->fudu->setStyleSheet("color: #00ca00;");
+    else
+         ui->fudu->setStyleSheet("color: red;");
     // 买一价数量和卖一价数量
     int buyCount = QString::fromStdString(d["buyCount"]).toInt();
     int sellCount = QString::fromStdString(d["sellCount"]).toInt();
@@ -173,36 +282,11 @@ void FuturesForm::updatePanKou(std::map<std::string,std::string>& d)
     ui->progressBar->setAlignment(Qt::AlignLeft);
     ui->progressBar->setAlignment(Qt::AlignRight);
 
-
     for(auto it = d.begin();it!=d.end();it++)
     {
-         if(it->second=="duokai")
-            it->second="多开";
-         else if(it->second=="duoping")
-            it->second="多平";
-         else if(it->second=="kongkai")
-            it->second="空开";
-         else if(it->second=="kongping")
-            it->second="空平";
-         else if(it->second=="shuangkai")
-            it->second="双开";
-         else if(it->second=="shuangping")
-            it->second="双平";
-         else if(it->second=="duohuan")
-            it->second="多换";
-         else if(it->second=="konghuan")
-            it->second="空换";
+         it->second = modifyOptype(it->second);
     }
-    std::vector<std::string> priceKeys = {"price1", "price2", "price3", "price4", "price5",
-                                         "price6", "price7", "price8", "price9", "price10"};
 
-    std::vector<std::string> countKeys = {"count1", "count2", "count3", "count4", "count5",
-                                         "count6", "count7", "count8", "count9", "count10"};
-
-    std::vector<std::string> optypeKeys = {"optype1", "optype2", "optype3", "optype4", "optype5",
-                                          "optype6", "optype7", "optype8", "optype9", "optype10"};
-    std::vector<std::string> color = {"color1", "color2", "color3", "color4", "color5",
-                                           "color6", "color7", "color8", "color9", "color10"};
     int maxcnt = 10;
     for (int i = 0; i < maxcnt; ++i)
     {
@@ -218,7 +302,7 @@ void FuturesForm::updatePanKou(std::map<std::string,std::string>& d)
     for (int i = 0; i < maxcnt; ++i)
     {
          ChengJiaolabels[i][2]->setText(QString::fromStdString(d[countKeys[i]]));
-         if(d[color[i]]=="1")
+         if(d[colorKeys[i]]=="1")
             ChengJiaolabels[i][2]->setStyleSheet("color: red;");
          else
             ChengJiaolabels[i][2]->setStyleSheet("color: #00ca00;");
@@ -228,12 +312,11 @@ void FuturesForm::updatePanKou(std::map<std::string,std::string>& d)
     for (int i = 0; i < maxcnt; ++i)
     {
          ChengJiaolabels[i][3]->setText(QString::fromStdString(d[optypeKeys[i]]));
-         if(d[color[i]]=="1")
+         if(d[colorKeys[i]]=="1")
             ChengJiaolabels[i][3]->setStyleSheet("color: red;");
          else
             ChengJiaolabels[i][3]->setStyleSheet("color: #00ca00;");
     }
-
 }
 
 void FuturesForm::socketDisconnected()
@@ -272,4 +355,5 @@ void FuturesForm::on_maichuButton_clicked()
         QMessageBox::information(this, "错误", "请选择开仓或平仓！");
     }
 }
+
 
