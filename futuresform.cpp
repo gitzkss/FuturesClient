@@ -6,6 +6,7 @@ FuturesForm::FuturesForm(QTcpSocket *s, std::string id, QWidget *parent) :
 {
     ui->setupUi(this);
     customerID = id;
+    ui->customerID->setText(QString::fromStdString(customerID));
     socket = s;
     // 连接信号和槽函数
     connect(socket, &QTcpSocket::connected, this, &FuturesForm::socketConnected);
@@ -140,6 +141,7 @@ void FuturesForm::updateInfo(std::map<std::string,std::string> d)
     ui->duodan->setText(QString::fromStdString(d["duo"]));
     ui->kongdan->setText(QString::fromStdString(d["kong"]));
     double fengxianlv = std::stod(d["fengxianlv"]);
+    fengxianlv *= 100;
     std::string fxl = std::to_string(fengxianlv).substr(0,5)+"%";
     ui->fengxianlv->setText(QString::fromStdString(fxl));
     std::string msg;
@@ -161,7 +163,7 @@ void FuturesForm::updateInfo(std::map<std::string,std::string> d)
         msg += d["_count"+std::to_string(i+1)]+"手 ";
         msg += d["_price"+std::to_string(i+1)];
         weituoButton[i]->setText(QString::fromStdString(msg));
-        bug(d["_optype"+std::to_string(i+1)]);
+        //bug(d["_optype"+std::to_string(i+1)]);
         if((d["_optype"+std::to_string(i+1)]=="duokai")||(d["_optype"+std::to_string(i+1)]=="kongping"))
             weituoButton[i]->setStyleSheet("color: red;");
         else
@@ -176,6 +178,7 @@ void FuturesForm::socketRead()
     std::map<std::string,std::string> d = deserializeMap(data);
     if(d["type"]=="pankou")
     {
+        bug(data);
         updatePanKou(d);
     }
     else if(d["type"]=="weituo")

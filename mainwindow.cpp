@@ -6,7 +6,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     //ip = "192.168.137.128";
-    ip = "127.0.0.1";
+    //ip = "127.0.0.1";
+    ip = "120.76.158.83";
     port = "8888";
 
     // 初始化 socket 对象
