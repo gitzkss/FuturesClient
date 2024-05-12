@@ -141,9 +141,28 @@ void FuturesForm::updateInfo(std::map<std::string,std::string> d)
     ui->duodan->setText(QString::fromStdString(d["duo"]));
     ui->kongdan->setText(QString::fromStdString(d["kong"]));
     double fengxianlv = std::stod(d["fengxianlv"]);
+    std::string avgduo = d["avgduo"].substr(0,d["avgduo"].find('.')+2);
+    std::string avgkong = d["avgkong"].substr(0,d["avgkong"].find('.')+2);
     fengxianlv *= 100;
     std::string fxl = std::to_string(fengxianlv).substr(0,5)+"%";
     ui->fengxianlv->setText(QString::fromStdString(fxl));
+    ui->avgduo->setText(QString::fromStdString(avgduo));
+    ui->avgkong->setText(QString::fromStdString(avgkong));
+    double fudongduo = (std::stod(d["newPrice"])-std::stod(avgduo))*std::stoi(d["duo"]);
+    double fudongkong = (std::stod(avgkong)-std::stod(d["newPrice"]))*std::stoi(d["kong"]);
+    double fudongyingkui = fudongduo+fudongkong;
+    std::string sfudongyingkui = std::to_string(fudongyingkui);
+    sfudongyingkui = sfudongyingkui.substr(0,sfudongyingkui.find('.')+2);
+    ui->fudongyingkui->setText(QString::fromStdString(sfudongyingkui));
+    if(std::stoi(d["duo"])!=0&&std::stoi(d["kong"])!=0)
+    {
+        if(fudongyingkui>=0)
+            ui->fudongyingkui->setStyleSheet("color: red;");
+        else
+            ui->fudongyingkui->setStyleSheet("color: #00ca00;");
+    }
+    else
+        ui->fudongyingkui->setStyleSheet("color: black;");
     std::string msg;
     for(int i = 0; i < 10; i++)
     {
@@ -320,6 +339,7 @@ void FuturesForm::updatePanKou(std::map<std::string,std::string> d)
          else
             ChengJiaolabels[i][3]->setStyleSheet("color: #00ca00;");
     }
+
 }
 
 void FuturesForm::socketDisconnected()
