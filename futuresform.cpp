@@ -154,7 +154,7 @@ void FuturesForm::updateInfo(std::map<std::string,std::string> d)
     std::string sfudongyingkui = std::to_string(fudongyingkui);
     sfudongyingkui = sfudongyingkui.substr(0,sfudongyingkui.find('.')+2);
     ui->fudongyingkui->setText(QString::fromStdString(sfudongyingkui));
-    if(std::stoi(d["duo"])!=0&&std::stoi(d["kong"])!=0)
+    if(std::stoi(d["duo"])!=0||std::stoi(d["kong"])!=0)
     {
         if(fudongyingkui>=0)
             ui->fudongyingkui->setStyleSheet("color: red;");
